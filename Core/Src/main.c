@@ -341,7 +341,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : PSH_Pin TRB_Pin TRA_Pin */
   GPIO_InitStruct.Pin = PSH_Pin|TRB_Pin|TRA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BLK_Pin CS_Pin DC_Pin */
@@ -361,7 +361,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : KO_Pin */
   GPIO_InitStruct.Pin = KO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(KO_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */

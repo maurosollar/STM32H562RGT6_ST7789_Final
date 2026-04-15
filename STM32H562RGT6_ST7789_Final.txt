@@ -1,0 +1,75 @@
+STM32H562RGT6+ ST7789
+
+Display ST7789 240x240 1.54"
+--------------------------------------------------------------
+
+MOSI  - PA7
+SCK   - PA5
+BLK   - PA1
+CS    - PA2
+DC    - PA3
+RST   - PC5
+
+Colocar todos abaixo com pull-up
+TRA - PC3
+TRB - PC1
+PSH - PC0
+KO  - PB13
+
+
+GND: Ground connection.
+VDD: Power supply input (typically 3.3V or 5V, depending on the specific display controller and voltage regulator on board. Consult module documentation or test with 3.3V first).
+SCL: I2C Clock line for the display.
+SDA: I2C Data line for the display.
+RES: Reset pin for the TFT display. Connect to a digital output pin on your microcontroller.
+DC: Data/Command pin for the TFT display. Connect to a digital output pin on your microcontroller.
+BLK: Backlight control pin. Connect to a digital output pin for backlight on/off control, or to a PWM pin for brightness adjustment.
+TRA: Rotary Encoder Channel A output. Connect to a digital input pin on your microcontroller.
+TRB: Rotary Encoder Channel B output. Connect to a digital input pin on your microcontroller.
+PSH: Push Button output for the rotary encoder. Connect to a digital input pin on your microcontroller.
+KO: Encoder Common or additional output pin. This pin's function can vary; it may be a common ground for the encoder or an additional signal. Consult specific examples for its usage.
+No display que comprei KO é o push button, acionando ele leva KO para GND
+
+Ativar Pull-up para TRA, TRB, PSH e KO
+
+
+STM32CubeMX
+- Yes para enable ICACHE and the MPU to access OTP & RO areas
+- (*) without TrustZone activated?
+-Pinout & Configuration / System Core / RCC -> Ativar HSE e LSE com Cristal externo.
+-Clock Configuration: 250MHz
+-Pinout & Configuration / Connectivity / SPI
+   SSPI1 Mode and Configuration
+   Mode: Half-Duplex Master
+   Configuration
+     Parameter Settings
+       Basic Parameters
+       Frame Format: Motorola
+       Data Size: 8 Bits
+       First Bit: MSB First
+     Clock Parameters
+       Prescaler (for Baud Rate): 2
+       Baud Rate: 16 Mbps/s (Calculado pelo Prescaler)
+       Clock Polarity(CPOL): Low
+       Clock Phase (CPHA): 1 Edge
+     NVIC Settings
+     SPI1 global interrupt (*)
+   GPDMA1
+     Channel 0 -2 Words Internal FIFO : Standarda Request mode
+       Request Configuration
+         Request SPI1_TX/I2S1_TX
+       Channel configuration
+         Direction Peripheral to Memory
+         
+     
+     
+   
+
+
+
+
+
+
+
+
+

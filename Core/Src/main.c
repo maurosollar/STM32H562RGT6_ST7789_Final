@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "st7789.h"
 #include "math.h"
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +48,7 @@ SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef handle_GPDMA1_Channel0;
 
 /* USER CODE BEGIN PV */
+volatile uint8_t spi_tx_done;
 
 /* USER CODE END PV */
 
@@ -370,7 +373,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi == &ST7789_SPI_PORT)
+    {
+        spi_tx_done = 1;
+    }
+}
 /* USER CODE END 4 */
 
  /* MPU Configuration */

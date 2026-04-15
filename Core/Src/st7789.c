@@ -12,6 +12,7 @@ uint16_t DMA_MIN_SIZE = 16;
 uint16_t disp_buf[ST7789_WIDTH * HOR_LEN];
 #endif
 
+extern volatile uint8_t spi_tx_done;
 
 /**
  * @brief Write command to ST7789 controller
@@ -46,11 +47,13 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
 
         if (DMA_MIN_SIZE <= buff_size)
         {
+        	spi_tx_done = 0;
             HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, buff, chunk_size);
+            while (!spi_tx_done);
         	// Espera GPDMA terminar de alimentar o FIFO
-        	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
+        	//while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
         	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-        	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+        	//while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
         }
         else
             HAL_SPI_Transmit(&ST7789_SPI_PORT, buff, chunk_size, HAL_MAX_DELAY);
@@ -234,19 +237,21 @@ void ST7789_Fill_Color(uint16_t color)
 
     for (uint32_t i = 0; i < full_loops; i++)
     {
-
+    	spi_tx_done = 0;
     	HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, chunk_pixels * 2);
+    	while (!spi_tx_done);
     	// Espera GPDMA terminar de alimentar o FIFO
-    	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
+    	//while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
     	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-    	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+    	//while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
 
     }
 
     // Envia restante via DMA também
     if (remainder)
-    {
+    {   spi_tx_done = 0;
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, remainder * 2);
+        while (!spi_tx_done);
     	// Espera GPDMA terminar de alimentar o FIFO
     	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
     	// Espera SPI terminar de transmitir de verdade (shift register vazio)
@@ -313,7 +318,9 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
     {
         uint32_t send_now = (total_pixels - sent > chunk_pixels) ? chunk_pixels : (total_pixels - sent);
 
+        spi_tx_done = 0;
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, send_now * 2);
+        while (!spi_tx_done);
     	// Espera GPDMA terminar de alimentar o FIFO
     	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
     	// Espera SPI terminar de transmitir de verdade (shift register vazio)

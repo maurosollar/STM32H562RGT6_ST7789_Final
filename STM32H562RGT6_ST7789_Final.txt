@@ -40,7 +40,7 @@ STM32CubeMX
 -Clock Configuration: 250MHz
 -Pinout & Configuration / Connectivity / SPI
    SSPI1 Mode and Configuration
-   Mode: Half-Duplex Master
+   Mode: Full-Duplex Master
    Configuration
      Parameter Settings
        Basic Parameters

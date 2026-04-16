@@ -12,8 +12,6 @@ uint16_t DMA_MIN_SIZE = 16;
 uint16_t disp_buf[ST7789_WIDTH * HOR_LEN];
 #endif
 
-extern volatile uint8_t spi_tx_done;
-
 /**
  * @brief Write command to ST7789 controller
  * @param cmd -> command to write
@@ -45,15 +43,12 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
     {
         uint16_t chunk_size = (buff_size > 65535) ? 65535 : buff_size;
 
-        if (DMA_MIN_SIZE <= buff_size)
+        if (chunk_size >= DMA_MIN_SIZE)
         {
         	spi_tx_done = 0;
             HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, buff, chunk_size);
             while (!spi_tx_done);
-        	// Espera GPDMA terminar de alimentar o FIFO
-        	//while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
-        	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-        	//while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+            while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
         }
         else
             HAL_SPI_Transmit(&ST7789_SPI_PORT, buff, chunk_size, HAL_MAX_DELAY);
@@ -126,21 +121,22 @@ void ST7789_SetRotation(uint8_t m)
  */
 void ST7789_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
+
 	uint16_t x_start = x0 + X_SHIFT, x_end = x1 + X_SHIFT;
 	uint16_t y_start = y0 + Y_SHIFT, y_end = y1 + Y_SHIFT;
 	
 	/* Column Address set */
 	ST7789_WriteCommand(ST7789_CASET); 
 	{
-		uint8_t data[] = {x_start >> 8, x_start & 0xFF, x_end >> 8, x_end & 0xFF};
-		ST7789_WriteData(data, sizeof(data));
+		uint8_t data_x[] = {x_start >> 8, x_start & 0xFF, x_end >> 8, x_end & 0xFF};
+		ST7789_WriteData(data_x, sizeof(data_x));
 	}
 
 	/* Row Address set */
 	ST7789_WriteCommand(ST7789_RASET);
 	{
-		uint8_t data[] = {y_start >> 8, y_start & 0xFF, y_end >> 8, y_end & 0xFF};
-		ST7789_WriteData(data, sizeof(data));
+		uint8_t data_y[] = {y_start >> 8, y_start & 0xFF, y_end >> 8, y_end & 0xFF};
+		ST7789_WriteData(data_y, sizeof(data_y));
 	}
 	/* Write to RAM */
 	ST7789_WriteCommand(ST7789_RAMWR);
@@ -232,19 +228,12 @@ void ST7789_Fill_Color(uint16_t color)
     ST7789_Select();
     ST7789_DC_Set();
 
-    // Envia blocos completos via DMA. Isto funciona porque o display sempre manda
-    // para o próximo pixel de memória, como o conteúdo de disp_buf é um bloco de cor, tudo ok!
-
     for (uint32_t i = 0; i < full_loops; i++)
     {
     	spi_tx_done = 0;
     	HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, chunk_pixels * 2);
     	while (!spi_tx_done);
-    	// Espera GPDMA terminar de alimentar o FIFO
-    	//while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
-    	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-    	//while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
-
+    	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
     }
 
     // Envia restante via DMA também
@@ -252,10 +241,7 @@ void ST7789_Fill_Color(uint16_t color)
     {   spi_tx_done = 0;
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, remainder * 2);
         while (!spi_tx_done);
-    	// Espera GPDMA terminar de alimentar o FIFO
-    	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
-    	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-    	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+        while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
     }
 
     ST7789_UnSelect();
@@ -304,7 +290,7 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
     uint32_t chunk_pixels = sizeof(disp_buf) / 2;
 
     // Preenche buffer (byte correto para SPI)
-    for (uint32_t i = 0; i < sizeof(disp_buf)/2; i++)
+    for (uint32_t i = 0; i < chunk_pixels; i++)
     {
     	disp_buf[i] = __REV16(color);
     }
@@ -321,11 +307,7 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
         spi_tx_done = 0;
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, send_now * 2);
         while (!spi_tx_done);
-    	// Espera GPDMA terminar de alimentar o FIFO
-    	while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
-    	// Espera SPI terminar de transmitir de verdade (shift register vazio)
-    	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
-
+        while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
         sent += send_now;
     }
 
@@ -428,12 +410,11 @@ void ST7789_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
  */
 void ST7789_DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
 {
-	ST7789_Select();
+
 	ST7789_DrawLine(x1, y1, x2, y1, color);
 	ST7789_DrawLine(x1, y1, x1, y2, color);
 	ST7789_DrawLine(x1, y2, x2, y2, color);
 	ST7789_DrawLine(x2, y1, x2, y2, color);
-	ST7789_UnSelect();
 }
 
 
@@ -452,7 +433,6 @@ void ST7789_DrawCircle(uint16_t x0, uint16_t y0, uint8_t r, uint16_t color)
 	int16_t x = 0;
 	int16_t y = r;
 
-	ST7789_Select();
 	ST7789_DrawPixel(x0, y0 + r, color);
 	ST7789_DrawPixel(x0, y0 - r, color);
 	ST7789_DrawPixel(x0 + r, y0, color);
@@ -478,7 +458,7 @@ void ST7789_DrawCircle(uint16_t x0, uint16_t y0, uint8_t r, uint16_t color)
 		ST7789_DrawPixel(x0 + y, y0 - x, color);
 		ST7789_DrawPixel(x0 - y, y0 - x, color);
 	}
-	ST7789_UnSelect();
+
 }
 
 
@@ -584,7 +564,6 @@ void ST7789_WriteString(uint16_t x, uint16_t y, const char *str, FontDef font, u
  */
 void ST7789_DrawFilledRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
-	uint8_t i;
 
 	/* Check input parameters */
 	if (x >= ST7789_WIDTH ||
@@ -602,7 +581,7 @@ void ST7789_DrawFilledRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
 	}
 
 	/* Draw lines */
-	for (i = 0; i <= h; i++) {
+	for (uint16_t i = 0; i <= h; i++) {
 		/* Draw lines */
 		ST7789_DrawLine(x, y + i, x + w, y + i, color);
 	}

@@ -4,9 +4,13 @@
 #include "fonts.h"
 #include "main.h"
 
+extern volatile uint8_t spi_tx_done;
+
 /* choose a Hardware SPI port to use. */
 #define ST7789_SPI_PORT hspi1
 extern SPI_HandleTypeDef ST7789_SPI_PORT;
+
+
 
 #define USE_DMA
 

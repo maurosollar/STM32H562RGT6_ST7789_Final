@@ -48,7 +48,7 @@ SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef handle_GPDMA1_Channel0;
 
 /* USER CODE BEGIN PV */
-volatile uint8_t spi_tx_done;
+volatile uint8_t spi_tx_done = 0;
 
 /* USER CODE END PV */
 
@@ -111,22 +111,29 @@ int main(void)
   ST7789_Init();
   HAL_Delay(100);
   HAL_GPIO_WritePin(BLK_GPIO_Port, BLK_Pin, 1);
-  ST7789_DrawLine(0, 0, 240, 240, BLUE);
+  ST7789_DrawLine(0, 0, 239, 239, BLUE);
+  ST7789_DrawLine(239, 0, 0, 239, YELLOW);
   HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  HAL_Delay(1000);
   while (1)
   {
 		//HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 1);
 		ST7789_Fill_Color(WHITE);
 		ST7789_DrawImage(10, 100, 128, 128, (uint16_t *)saber);
-		HAL_Delay(500);
+		HAL_Delay(1000);
 		ST7789_Fill_Color(WHITE);
-		ST7789_Test();
+		ST7789_DrawImage(0, 0, 240, 240, (uint16_t *)knky);
+		HAL_Delay(1000);
+		ST7789_Fill_Color(BLUE);
+		HAL_Delay(1000);
+		ST7789_Fill_Color(WHITE);
+		ST7789_ClearArea(0,0,150,150,BLUE);
+		HAL_Delay(1000);
+		//ST7789_Test();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

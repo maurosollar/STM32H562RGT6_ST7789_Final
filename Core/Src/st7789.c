@@ -63,9 +63,9 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
     while (buff_size > 0)
     {
         uint16_t chunk_size = (buff_size > 65535) ? 65535 : buff_size;
-
+        ST7789_Select();
         HAL_SPI_Transmit(&ST7789_SPI_PORT, buff, chunk_size, HAL_MAX_DELAY);
-
+        ST7789_UnSelect();
         buff += chunk_size;
         buff_size -= chunk_size;
     }

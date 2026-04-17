@@ -46,9 +46,11 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
         if (chunk_size >= DMA_MIN_SIZE)
         {
         	spi_tx_done = 0;
+        	ST7789_Select();
             HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, buff, chunk_size);
             while (!spi_tx_done);
             while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+            ST7789_UnSelect();
         }
         else
             HAL_SPI_Transmit(&ST7789_SPI_PORT, buff, chunk_size, HAL_MAX_DELAY);
@@ -231,17 +233,22 @@ void ST7789_Fill_Color(uint16_t color)
     for (uint32_t i = 0; i < full_loops; i++)
     {
     	spi_tx_done = 0;
+        ST7789_Select();
     	HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, chunk_pixels * 2);
     	while (!spi_tx_done);
     	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+    	ST7789_UnSelect();
+
     }
 
     // Envia restante via DMA também
     if (remainder)
     {   spi_tx_done = 0;
+        ST7789_Select();
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, remainder * 2);
         while (!spi_tx_done);
         while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+        ST7789_UnSelect();
     }
 
     ST7789_UnSelect();
@@ -305,9 +312,11 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
         uint32_t send_now = (total_pixels - sent > chunk_pixels) ? chunk_pixels : (total_pixels - sent);
 
         spi_tx_done = 0;
+        ST7789_Select();
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, send_now * 2);
         while (!spi_tx_done);
         while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
+        ST7789_UnSelect();
         sent += send_now;
     }
 
@@ -711,48 +720,15 @@ void ST7789_DrawFilledCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 
 
 /**
- * @brief Open/Close tearing effect line
+ * @brief Open/Close tearing effect line - ***Only TE pin present***
  * @param tear -> Whether to tear
  * @return none
  */
-void ST7789_TearEffect(uint8_t tear) // Somente se tiver utilizando o pino TE, não tem na maioria dos display's
+void ST7789_TearEffect(uint8_t tear)
 {
 	ST7789_WriteCommand(tear ? 0x35 /* TEON */ : 0x34 /* TEOFF */);
 }
 
-/*
-void lvgl_flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
-{
-    uint32_t width  = area->x2 - area->x1 + 1;
-    uint32_t height = area->y2 - area->y1 + 1;
-
-    // Define janela no display
-    ST7789_SetAddressWindow(area->x1, area->y1, area->x2, area->y2);
-
-    ST7789_Select();
-    ST7789_DC_Set();
-
-#ifdef USE_DMA
-
-    uint32_t size = width * height * 2; // RGB565
-
-    HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, px_map, size);
-
-    while (HAL_SPI_GetState(&ST7789_SPI_PORT) != HAL_SPI_STATE_READY) {}
-
-#else
-
-    HAL_SPI_Transmit(&ST7789_SPI_PORT, px_map, width * height * 2, HAL_MAX_DELAY);
-
-#endif
-
-    ST7789_UnSelect();
-
-    // MUITO IMPORTANTE: avisar LVGL que terminou
-    lv_display_flush_ready(disp);
-}
-
-*/
 
 /** 
  * @brief A Simple test function for ST7789

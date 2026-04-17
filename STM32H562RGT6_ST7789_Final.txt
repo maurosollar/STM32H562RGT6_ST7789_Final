@@ -52,6 +52,8 @@ STM32CubeMX
        Baud Rate: 16 Mbps/s (Calculado pelo Prescaler)
        Clock Polarity(CPOL): Low
        Clock Phase (CPHA): 1 Edge
+     Advanced Parameters
+       NSSP Mode: Disable
      NVIC Settings
      SPI1 global interrupt (*)
    GPDMA1
@@ -59,7 +61,13 @@ STM32CubeMX
        Request Configuration
          Request SPI1_TX/I2S1_TX
        Channel configuration
-         Direction Peripheral to Memory
+         Direction Memory to Peripheral
+       Source Data Setting
+         Source Address increment After Transfer: Enabled
+         Data Width: Byte
+       Destination Data Setting
+         Destination Address increment After Transfer: Disable
+         Data Width: Byte
          
      
      

@@ -108,9 +108,10 @@ int main(void)
   MX_SPI1_Init();
   MX_ICACHE_Init();
   /* USER CODE BEGIN 2 */
-  ST7789_Init();
-  HAL_Delay(100);
   HAL_GPIO_WritePin(BLK_GPIO_Port, BLK_Pin, 1);
+  ST7789_Init();
+
+
   ST7789_DrawLine(0, 0, 239, 239, BLUE);
   ST7789_DrawLine(239, 0, 0, 239, YELLOW);
   HAL_Delay(1000);
@@ -122,7 +123,7 @@ int main(void)
   while (1)
   {
 		//HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 1);
-		ST7789_Fill_Color(WHITE);
+		ST7789_Fill_Color(YELLOW);
 		ST7789_DrawImage(10, 100, 128, 128, (uint16_t *)saber);
 		HAL_Delay(1000);
 		ST7789_Fill_Color(WHITE);
@@ -304,7 +305,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   hspi1.Init.CRCPolynomial = 0x7;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
   hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
   hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
   hspi1.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
@@ -354,11 +355,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : BLK_Pin CS_Pin DC_Pin */
-  GPIO_InitStruct.Pin = BLK_Pin|CS_Pin|DC_Pin;
+  /*Configure GPIO pin : BLK_Pin */
+  GPIO_InitStruct.Pin = BLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BLK_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : CS_Pin DC_Pin */
+  GPIO_InitStruct.Pin = CS_Pin|DC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : RST_Pin */

@@ -111,10 +111,6 @@ int main(void)
   HAL_GPIO_WritePin(BLK_GPIO_Port, BLK_Pin, 1);
   ST7789_Init();
 
-
-  ST7789_DrawLine(0, 0, 239, 239, BLUE);
-  ST7789_DrawLine(239, 0, 0, 239, YELLOW);
-  HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -123,18 +119,7 @@ int main(void)
   while (1)
   {
 		//HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 1);
-		ST7789_Fill_Color(YELLOW);
-		ST7789_DrawImage(10, 100, 128, 128, (uint16_t *)saber);
-		HAL_Delay(1000);
-		ST7789_Fill_Color(WHITE);
-		ST7789_DrawImage(0, 0, 240, 240, (uint16_t *)knky);
-		HAL_Delay(1000);
-		ST7789_Fill_Color(BLUE);
-		HAL_Delay(1000);
-		ST7789_Fill_Color(WHITE);
-		ST7789_ClearArea(0,0,150,150,BLUE);
-		HAL_Delay(1000);
-		//ST7789_Test();
+		ST7789_Test();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -168,7 +153,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 62;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
+  RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1_VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1_VCORANGE_WIDE;
@@ -366,7 +351,7 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = CS_Pin|DC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : RST_Pin */

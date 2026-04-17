@@ -10,7 +10,7 @@ extern volatile uint8_t spi_tx_done;
 #define ST7789_SPI_PORT hspi1
 extern SPI_HandleTypeDef ST7789_SPI_PORT;
 
-//#define USE_DMA
+#define USE_DMA
 
 /* Pin connection*/
 #define ST7789_RST_PORT RST_GPIO_Port

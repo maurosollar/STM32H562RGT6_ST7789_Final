@@ -12,6 +12,7 @@ uint16_t DMA_MIN_SIZE = 16;
 uint16_t disp_buf[ST7789_WIDTH * HOR_LEN];
 #endif
 
+
 /**
  * @brief Write command to ST7789 controller
  * @param cmd -> command to write
@@ -38,7 +39,6 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
     ST7789_DC_Set();
 
 #ifdef USE_DMA
-
     while (buff_size > 0)
     {
         uint16_t chunk_size = (buff_size > 65535) ? 65535 : buff_size;
@@ -57,9 +57,7 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
         buff += chunk_size;
         buff_size -= chunk_size;
     }
-
 #else
-
     while (buff_size > 0)
     {
         uint16_t chunk_size = (buff_size > 65535) ? 65535 : buff_size;
@@ -69,9 +67,7 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size)
         buff += chunk_size;
         buff_size -= chunk_size;
     }
-
 #endif
-
     ST7789_UnSelect();
 }
 
@@ -123,7 +119,6 @@ void ST7789_SetRotation(uint8_t m)
  */
 void ST7789_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
-
 	uint16_t x_start = x0 + X_SHIFT, x_end = x1 + X_SHIFT;
 	uint16_t y_start = y0 + Y_SHIFT, y_end = y1 + Y_SHIFT;
 	
@@ -215,8 +210,7 @@ void ST7789_Fill_Color(uint16_t color)
 {
     ST7789_SetAddressWindow(0, 0, ST7789_WIDTH - 1, ST7789_HEIGHT - 1);
 
-#ifdef USE_DMA
-
+    #ifdef USE_DMA
     uint32_t total_pixels = ST7789_WIDTH * ST7789_HEIGHT;
     uint32_t chunk_pixels = ST7789_WIDTH * HOR_LEN;
 
@@ -238,7 +232,6 @@ void ST7789_Fill_Color(uint16_t color)
     	while (!spi_tx_done);
     	while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {}
     	ST7789_UnSelect();
-
     }
 
     // Envia restante via DMA também
@@ -310,7 +303,6 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
     while (sent < total_pixels)
     {
         uint32_t send_now = (total_pixels - sent > chunk_pixels) ? chunk_pixels : (total_pixels - sent);
-
         spi_tx_done = 0;
         ST7789_Select();
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t*)disp_buf, send_now * 2);
@@ -323,12 +315,10 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
     ST7789_UnSelect();
 
 #else
-
     uint8_t data[] = {color >> 8, color & 0xFF};
 
     for (uint32_t i = 0; i < (x2 - x1 + 1) * (y2 - y1 + 1); i++)
         ST7789_WriteData(data, 2);
-
 #endif
 }
 
@@ -419,7 +409,6 @@ void ST7789_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
  */
 void ST7789_DrawRectangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color)
 {
-
 	ST7789_DrawLine(x1, y1, x2, y1, color);
 	ST7789_DrawLine(x1, y1, x1, y2, color);
 	ST7789_DrawLine(x1, y2, x2, y2, color);
@@ -467,7 +456,6 @@ void ST7789_DrawCircle(uint16_t x0, uint16_t y0, uint8_t r, uint16_t color)
 		ST7789_DrawPixel(x0 + y, y0 - x, color);
 		ST7789_DrawPixel(x0 - y, y0 - x, color);
 	}
-
 }
 
 
@@ -573,7 +561,6 @@ void ST7789_WriteString(uint16_t x, uint16_t y, const char *str, FontDef font, u
  */
 void ST7789_DrawFilledRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
-
 	/* Check input parameters */
 	if (x >= ST7789_WIDTH ||
 		y >= ST7789_HEIGHT) {
@@ -737,7 +724,6 @@ void ST7789_TearEffect(uint8_t tear)
  */
 void ST7789_Test(void)
 {
-
 	ST7789_Fill_Color(WHITE);
 	HAL_Delay(1000);
 	ST7789_WriteString(10, 20, "Speed Test", Font_11x18, RED, WHITE);
@@ -805,5 +791,8 @@ void ST7789_Test(void)
 
 	ST7789_Fill_Color(WHITE);
 	ST7789_DrawImage(76, 56, 128, 128, (uint16_t *)saber);
+	HAL_Delay(3000);
+	ST7789_Fill_Color(WHITE);
+	ST7789_DrawImage(0, 0, 240, 240, (uint16_t *)knky);
 	HAL_Delay(3000);
 }

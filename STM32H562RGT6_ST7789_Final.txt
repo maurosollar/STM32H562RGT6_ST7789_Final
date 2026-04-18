@@ -11,8 +11,8 @@ DC    - PA3
 RST   - PC5
 
 Colocar todos abaixo com pull-up
-TRA - PC3
-TRB - PC1
+TRA - PC3 - Mudei o encoder para PA0 = TIM2_CH1
+TRB - PC1 - Mudei o encoder para PB3 = TIM2_CH2
 PSH - PC0
 KO  - PB13
 
@@ -70,10 +70,23 @@ STM32CubeMX
          Data Width: Byte
          
      
-     
-   
 
+Parte do encoder
 
+-Pinout & Configuration / Timers
+  TIM2
+    Comgined Channels: Encoder Mode
+      Configuration / Parameter Settings
+        Counter Settings
+          Counter Period (AutoReloadRegister 32bits): 65535
+          Internal Clock Division(CKD): Division by 4 <--Depende do clock
+          auto-reload preload: Enable
+        Encoder
+          Encoder Mode: Encoder Mode TI1 and TI2
+          __ Parameters for Channel 1 ___
+          Input filter: 10
+          __ Parameters for Channel 2 ___
+          Input filter: 10
 
 
 

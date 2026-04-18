@@ -24,6 +24,8 @@
 #include "st7789.h"
 #include "math.h"
 
+//#include "string.h"
+#include "stdio.h" // Utilizado pelo snprinf
 
 /* USER CODE END Includes */
 
@@ -47,6 +49,8 @@
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef handle_GPDMA1_Channel0;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 volatile uint8_t spi_tx_done = 0;
 
@@ -60,6 +64,7 @@ static void MX_GPIO_Init(void);
 static void MX_GPDMA1_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_ICACHE_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -107,9 +112,11 @@ int main(void)
   MX_GPDMA1_Init();
   MX_SPI1_Init();
   MX_ICACHE_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(BLK_GPIO_Port, BLK_Pin, 1);
   ST7789_Init();
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
 
   /* USER CODE END 2 */
 
@@ -130,11 +137,52 @@ int main(void)
   uint8_t q_x = 0;
   uint8_t q_y = 120;
   uint8_t q_dir = 0; // 0 -> frente, 1 <- traz, 2 ^ cima e 3 v baixo
+  char buf[15];
+  uint16_t enc_anterior = 0, enc_atual = 0;
 
   while (1)
   {
+	  enc_atual = (uint16_t)(TIM2->CNT)>>2;
+	  snprintf(buf, sizeof(buf), "Counter: %d", enc_atual);
+	  ST7789_WriteString(0, 230, buf, Font_7x10, YELLOW, BLACK);
 	  HAL_GPIO_TogglePin(TEMPO_GPIO_Port, TEMPO_Pin);
 	  inicio = HAL_GetTick();
+
+	  if (enc_anterior != enc_atual ) { // Muda de direção
+		  if (q_dir == 0) { // Frente
+		      if (enc_atual > enc_anterior) {
+    			  q_dir = 3; // Baixo
+		      }
+		      if (enc_atual < enc_anterior) {
+    			  q_dir = 2; // Cima
+		      }
+		  }
+		  if (q_dir == 1) { // Traz
+		      if (enc_atual > enc_anterior) {
+    			  q_dir = 2; // Baixo
+		      }
+		      if (enc_atual < enc_anterior) {
+    			  q_dir = 3; // Cima
+		      }
+		  }
+		  if (q_dir == 2) { // Cima
+		      if (enc_atual > enc_anterior) {
+    			  q_dir = 0; // Frente
+		      }
+		      if (enc_atual < enc_anterior) {
+    			  q_dir = 1; // Traz
+		      }
+		  }
+		  if (q_dir == 3) { // Baixo
+		      if (enc_atual > enc_anterior) {
+    			  q_dir = 1; // Traz
+		      }
+		      if (enc_atual < enc_anterior) {
+    			  q_dir = 0; // Frente
+		      }
+		  }
+		  enc_anterior = enc_atual;
+	  }
 	  if ((q_dir == 0) & (q_x < 239)){ // Frente
 		  q_x++;
 	  }
@@ -147,7 +195,7 @@ int main(void)
 	  if ((q_dir == 3) & (q_x < 239)){ // Baixo
 		  q_y++;
 	  }
-	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) ) {
+	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) ) { // Colisão nos limites da tela
 		  for ( uint8_t i = 0; i < 30; i += 3) {
               ST7789_DrawCircle(q_x, q_y, i, RED);
 		  }
@@ -345,6 +393,55 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 65535;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV4;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 10;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 10;
+  if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 

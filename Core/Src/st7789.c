@@ -8,7 +8,7 @@ uint16_t DMA_MIN_SIZE = 16;
  * And if your MCU have enough RAM(even larger than full-frame size),
  * Then you can specify the framebuffer size to the full resolution below.
  */
-#define HOR_LEN 60    // Also mind the resolution of your screen!
+#define HOR_LEN 120    // Also mind the resolution of your screen!
 uint16_t disp_buf[ST7789_WIDTH * HOR_LEN];
 #endif
 
@@ -44,8 +44,8 @@ static void ST7789_WriteData(uint8_t *buff, size_t buff_size) {
             HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, buff, chunk_size);
             while (!spi_tx_done) {
             }
-            while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
-            }
+            //while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
+            //}
             ST7789_UnSelect();
         } else {
             HAL_SPI_Transmit(&ST7789_SPI_PORT, buff, chunk_size, HAL_MAX_DELAY);
@@ -202,55 +202,7 @@ void ST7789_Init(void) {
 }
 
 void ST7789_Fill_Color(uint16_t color) {
-    ST7789_SetAddressWindow(0, 0, ST7789_WIDTH - 1, ST7789_HEIGHT - 1);
-
-#ifdef USE_DMA
-    uint32_t total_pixels = ST7789_WIDTH * ST7789_HEIGHT;
-    uint32_t chunk_pixels = ST7789_WIDTH * HOR_LEN;
-
-    // Fill buffer with color (byte-swapped)
-    for (uint32_t i = 0; i < chunk_pixels; i++) {
-        disp_buf[i] = __REV16(color);
-    }
-
-    uint32_t full_loops = total_pixels / chunk_pixels;
-    uint32_t remainder = total_pixels % chunk_pixels;
-
-    ST7789_Select();
-    ST7789_DC_Set();
-
-    for (uint32_t i = 0; i < full_loops; i++) {
-        spi_tx_done = 0;
-        ST7789_Select();
-        HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t *)disp_buf, chunk_pixels * 2);
-        while (!spi_tx_done) {
-        }
-        while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
-        }
-        ST7789_UnSelect();
-    }
-
-    // Send the remaining data using DMA as well
-    if (remainder) {
-        spi_tx_done = 0;
-        ST7789_Select();
-        HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t *)disp_buf, remainder * 2);
-        while (!spi_tx_done) {
-        }
-        while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
-        }
-        ST7789_UnSelect();
-    }
-
-    ST7789_UnSelect();
-#else
-    for (uint16_t i = 0; i < ST7789_WIDTH; i++) {
-        for (uint16_t j = 0; j < ST7789_HEIGHT; j++) {
-            uint8_t data[] = {color >> 8, color & 0xFF};
-            ST7789_WriteData(data, sizeof(data));
-        }
-    }
-#endif
+	ST7789_ClearArea(0, 0, ST7789_WIDTH, ST7789_HEIGHT, color);
 }
 
 /**
@@ -296,8 +248,8 @@ void ST7789_ClearArea(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16
         HAL_SPI_Transmit_DMA(&ST7789_SPI_PORT, (uint8_t *)disp_buf, send_now * 2);
         while (!spi_tx_done) {
         }
-        while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
-        }
+        //while (__HAL_SPI_GET_FLAG(&ST7789_SPI_PORT, SPI_FLAG_TXC) == RESET) {
+        //}
         ST7789_UnSelect();
         sent += send_now;
     }

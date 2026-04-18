@@ -73,6 +73,8 @@ void Error_Handler(void);
 #define RST_GPIO_Port GPIOC
 #define KO_Pin GPIO_PIN_13
 #define KO_GPIO_Port GPIOB
+#define TEMPO_Pin GPIO_PIN_11
+#define TEMPO_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

@@ -116,13 +116,51 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  uint32_t inicio;
+  uint32_t tempo_gasto;
+  uint32_t periodo_ms = 5;   // aproximação de 40 Hz
+
+  HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 0);
+
+  ST7789_Fill_Color(BLACK);
+  ST7789_WriteString(55, 5, "Snake game", Font_11x18, YELLOW, BLACK);
+  ST7789_DrawLine(0, 25, 239, 25, WHITE);
+  //ST7789_DrawImage(0, 0, 128, 128, (uint16_t *)saber); // knky
+
+  uint8_t q_x = 0;
+  uint8_t q_y = 120;
+  uint8_t q_dir = 0; // 0 -> frente, 1 <- traz, 2 ^ cima e 3 v baixo
+
   while (1)
   {
-		//HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 1);
-		ST7789_Test();
+	  HAL_GPIO_TogglePin(TEMPO_GPIO_Port, TEMPO_Pin);
+	  inicio = HAL_GetTick();
+	  if ((q_dir == 0) & (q_x < 239)){ // Frente
+		  q_x++;
+	  }
+	  if ((q_dir == 1) & (q_x > 0)){   // Traz
+		  q_x--;
+	  }
+	  if ((q_dir == 2) & (q_y > 27)){  // Cima
+		  q_y--;
+	  }
+	  if ((q_dir == 3) & (q_x < 239)){ // Baixo
+		  q_y++;
+	  }
+	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) ) {
+		  for ( uint8_t i = 0; i < 30; i += 3) {
+              ST7789_DrawCircle(q_x, q_y, i, RED);
+		  }
+	  }
+      ST7789_DrawPixel(q_x, q_y, WHITE);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      tempo_gasto = HAL_GetTick() - inicio;
+      if (tempo_gasto < periodo_ms)
+      {
+          HAL_Delay(periodo_ms - tempo_gasto);
+      }
   }
   /* USER CODE END 3 */
 }
@@ -332,7 +370,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, BLK_Pin|CS_Pin|DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RST_GPIO_Port, RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, RST_Pin|TEMPO_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PSH_Pin TRB_Pin TRA_Pin */
   GPIO_InitStruct.Pin = PSH_Pin|TRB_Pin|TRA_Pin;
@@ -354,12 +392,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RST_Pin */
-  GPIO_InitStruct.Pin = RST_Pin;
+  /*Configure GPIO pins : RST_Pin TEMPO_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|TEMPO_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RST_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : KO_Pin */
   GPIO_InitStruct.Pin = KO_Pin;

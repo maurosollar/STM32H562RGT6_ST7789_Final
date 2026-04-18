@@ -90,6 +90,8 @@ Parte do encoder
 
 
 
+Observações do código:
+#include "stdio.h" // Utilizado pelo snprinf
 
 
 

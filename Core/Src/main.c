@@ -149,38 +149,40 @@ int main(void)
 	  inicio = HAL_GetTick();
 
 	  if (enc_anterior != enc_atual ) { // Muda de direção
-		  if (q_dir == 0) { // Frente
-		      if (enc_atual > enc_anterior) {
-    			  q_dir = 3; // Baixo
-		      }
-		      if (enc_atual < enc_anterior) {
-    			  q_dir = 2; // Cima
-		      }
-		  }
-		  if (q_dir == 1) { // Traz
-		      if (enc_atual > enc_anterior) {
-    			  q_dir = 2; // Baixo
-		      }
-		      if (enc_atual < enc_anterior) {
-    			  q_dir = 3; // Cima
-		      }
-		  }
-		  if (q_dir == 2) { // Cima
-		      if (enc_atual > enc_anterior) {
-    			  q_dir = 0; // Frente
-		      }
-		      if (enc_atual < enc_anterior) {
-    			  q_dir = 1; // Traz
-		      }
-		  }
-		  if (q_dir == 3) { // Baixo
-		      if (enc_atual > enc_anterior) {
-    			  q_dir = 1; // Traz
-		      }
-		      if (enc_atual < enc_anterior) {
-    			  q_dir = 0; // Frente
-		      }
-		  }
+		  switch(q_dir) {
+			  case 0: // Frente
+				  if (enc_atual > enc_anterior) {
+					  q_dir = 3; // Baixo
+				  }
+				  if (enc_atual < enc_anterior) {
+					  q_dir = 2; // Cima
+				  }
+				  break;
+			  case 1: // Traz
+				  if (enc_atual > enc_anterior) {
+					  q_dir = 2; // Baixo
+				  }
+				  if (enc_atual < enc_anterior) {
+					  q_dir = 3; // Cima
+				  }
+				  break;
+			  case 2: // Cima
+				  if (enc_atual > enc_anterior) {
+					  q_dir = 0; // Frente
+				  }
+				  if (enc_atual < enc_anterior) {
+					  q_dir = 1; // Traz
+				  }
+				  break;
+			  case 3: // Baixo
+				  if (enc_atual > enc_anterior) {
+					  q_dir = 1; // Traz
+				  }
+				  if (enc_atual < enc_anterior) {
+					  q_dir = 0; // Frente
+				  }
+				  break;
+	      }
 		  enc_anterior = enc_atual;
 	  }
 	  if ((q_dir == 0) & (q_x < 239)){ // Frente
@@ -189,16 +191,27 @@ int main(void)
 	  if ((q_dir == 1) & (q_x > 0)){   // Traz
 		  q_x--;
 	  }
-	  if ((q_dir == 2) & (q_y > 27)){  // Cima
+	  if ((q_dir == 2) & (q_y > 26)){  // Cima
 		  q_y--;
 	  }
-	  if ((q_dir == 3) & (q_x < 239)){ // Baixo
+	  if ((q_dir == 3) & (q_y < 239)){ // Baixo
 		  q_y++;
 	  }
 	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) ) { // Colisão nos limites da tela
 		  for ( uint8_t i = 0; i < 30; i += 3) {
               ST7789_DrawCircle(q_x, q_y, i, RED);
 		  }
+          HAL_Delay(1000);
+          ST7789_WriteString(20, 112, "Game Over!!!", Font_16x26, RED, BLACK);
+          HAL_Delay(3000);
+          q_x = 0;
+          q_y = 120;
+          ST7789_Fill_Color(BLACK);
+          ST7789_WriteString(55, 5, "Snake game", Font_11x18, YELLOW, BLACK);
+          ST7789_DrawLine(0, 25, 239, 25, WHITE);
+          __HAL_TIM_SET_COUNTER(&htim2, 0);
+          enc_anterior = 0;
+          q_dir = 0;
 	  }
       ST7789_DrawPixel(q_x, q_y, WHITE);
     /* USER CODE END WHILE */

@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "st7789.h"
 #include "math.h"
+#include "stdlib.h" // rand() utiliza esta lib
+
 
 //#include "string.h"
 #include "stdio.h" // Utilizado pelo snprinf
@@ -125,7 +127,7 @@ int main(void)
 
   uint32_t inicio;
   uint32_t tempo_gasto;
-  uint32_t periodo_ms = 5;   // aproximação de 40 Hz
+  uint32_t periodo_ms = 10;   // aproximação de 40 Hz
 
   HAL_GPIO_WritePin(TEMPO_GPIO_Port, TEMPO_Pin, 0);
 
@@ -134,19 +136,42 @@ int main(void)
   ST7789_DrawLine(0, 25, 239, 25, WHITE);
   //ST7789_DrawImage(0, 0, 128, 128, (uint16_t *)saber); // knky
 
-  uint8_t q_x = 0;
+  uint8_t q_x = 10;
   uint8_t q_y = 120;
   uint8_t q_dir = 0; // 0 -> frente, 1 <- traz, 2 ^ cima e 3 v baixo
   char buf[15];
-  uint16_t enc_anterior = 0, enc_atual = 0;
+  uint16_t enc_anterior, enc_atual;
+  uint8_t tamanho= 1;
+  uint8_t corpo[2][100];
+  uint8_t loops = 0;
+  uint8_t posx_comida, posy_comida;
+  uint8_t comeu = 1;
+  uint8_t score = 0;
+  uint8_t col_corpo = 0;
+
+  for ( uint8_t i = 0; i < 10; i++) {
+ 	  corpo[0][i] = i;
+      corpo[1][i] = 128;
+   }
+  __HAL_TIM_SET_COUNTER(&htim2, 32768);
+  enc_atual = (uint16_t)(TIM2->CNT)>>2;
+  enc_anterior = enc_atual;
 
   while (1)
   {
 	  enc_atual = (uint16_t)(TIM2->CNT)>>2;
-	  snprintf(buf, sizeof(buf), "Counter: %d", enc_atual);
+	  snprintf(buf, sizeof(buf), "Score: %d", score);
 	  ST7789_WriteString(0, 230, buf, Font_7x10, YELLOW, BLACK);
 	  HAL_GPIO_TogglePin(TEMPO_GPIO_Port, TEMPO_Pin);
 	  inicio = HAL_GetTick();
+	  if (loops > 50 && comeu) {
+		  posx_comida = (uint8_t)rand()%(200) + 15;
+		  posy_comida = (uint8_t)rand()%(180) + 40;
+
+		  loops = 0;
+		  comeu = 0;
+		  ST7789_DrawFilledCircle(posx_comida, posy_comida, 8, WHITE);
+	  }
 
 	  if (enc_anterior != enc_atual ) { // Muda de direção
 		  switch(q_dir) {
@@ -197,7 +222,15 @@ int main(void)
 	  if ((q_dir == 3) & (q_y < 239)){ // Baixo
 		  q_y++;
 	  }
-	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) ) { // Colisão nos limites da tela
+
+	  // Procula colisão do corpo
+	  for ( uint8_t i = 0; i < 10 * tamanho; i++) {
+	      if ((corpo[0][i] == q_x ) && (corpo[1][i] == q_y)) {
+			  col_corpo = 1;
+		  }
+	  }
+
+	  if ((q_y >= 239) || (q_y <= 26) || (q_x >= 239) || (q_x <= 0) || (col_corpo == 1)) { // Colisão nos limites da tela
 		  for ( uint8_t i = 0; i < 30; i += 3) {
               ST7789_DrawCircle(q_x, q_y, i, RED);
 		  }
@@ -209,19 +242,85 @@ int main(void)
           ST7789_Fill_Color(BLACK);
           ST7789_WriteString(55, 5, "Snake game", Font_11x18, YELLOW, BLACK);
           ST7789_DrawLine(0, 25, 239, 25, WHITE);
-          __HAL_TIM_SET_COUNTER(&htim2, 0);
-          enc_anterior = 0;
+          __HAL_TIM_SET_COUNTER(&htim2, 32768);
+          enc_atual = (uint16_t)(TIM2->CNT)>>2;
+          enc_anterior = enc_atual;
           q_dir = 0;
+          score = 0;
+          tamanho = 1;
+          col_corpo = 0;
+          comeu  = 1;
+          for ( uint8_t i = 0; i < 10; i++) {
+         	  corpo[0][i] = i;
+              corpo[1][i] = 128;
+          }
 	  }
-      ST7789_DrawPixel(q_x, q_y, WHITE);
+	  if ((q_y >= posy_comida-8) && (q_y <= posy_comida +8) && // Comeu
+	  (q_x >= posx_comida-8) && (q_x <= posx_comida +8) && (comeu == 0)) {
+		  tamanho++;
+		  score += 10;
+		  comeu = 1;
+		  snprintf(buf, sizeof(buf), "Score: %d", score);
+		  ST7789_WriteString(0, 230, buf, Font_7x10, YELLOW, BLACK);
+		  if (tamanho < 11) {
+		      for ( uint8_t i = 0; i < 10; i++) {
+		          corpo[0][i + ((tamanho -1) * 10)] = q_x;
+		          corpo[1][i + ((tamanho -1) * 10)] = q_y;
+		      }
+		      ST7789_DrawFilledCircle(posx_comida, posy_comida, 8, BLACK);
+		  } else {
+	          ST7789_WriteString(40, 112, "You Won!!!", Font_16x26, RED, BLACK);
+
+	          HAL_Delay(3000);
+	          q_x = 0;
+	          q_y = 120;
+	          ST7789_Fill_Color(BLACK);
+	          ST7789_WriteString(55, 5, "Snake game", Font_11x18, YELLOW, BLACK);
+	          ST7789_DrawLine(0, 25, 239, 25, WHITE);
+	          __HAL_TIM_SET_COUNTER(&htim2, 32768);
+	          enc_atual = (uint16_t)(TIM2->CNT)>>2;
+	          enc_anterior = enc_atual;
+	          q_dir = 0;
+	          score = 0;
+	          tamanho = 1;
+	          col_corpo = 0;
+	          comeu  = 1;
+	          for ( uint8_t i = 0; i < 10; i++) {
+	         	  corpo[0][i] = i;
+	              corpo[1][i] = 128;
+	          }
+
+		  }
+      }
+
+	  // Desenha a cobra
+
+	  //for ( uint8_t i = 0; i < 10 * tamanho; i++) {
+      //    ST7789_DrawPixel(corpo[0][i], corpo[1][i], WHITE);
+	  //}
+	  ST7789_DrawPixel(corpo[0][10 * tamanho - 1], corpo[1][10 * tamanho - 1], WHITE);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
       tempo_gasto = HAL_GetTick() - inicio;
-      if (tempo_gasto < periodo_ms)
-      {
+      if (tempo_gasto < periodo_ms) {
           HAL_Delay(periodo_ms - tempo_gasto);
       }
+
+      loops++;
+
+      //for ( uint8_t i = 0; i < 10 * tamanho; i++) {
+      //    ST7789_DrawPixel(corpo[0][i], corpo[1][i], BLACK);
+	  //}
+      ST7789_DrawPixel(corpo[0][0], corpo[1][0], BLACK);
+	  for ( uint8_t i = 0; i < 10 * tamanho; i++) {
+		  corpo[0][i] = corpo[0][i+1];
+		  corpo[1][i] = corpo[1][i+1];
+	  }
+	  corpo[0][10 * tamanho - 1] = q_x;
+	  corpo[1][10 * tamanho - 1] = q_y;
+
   }
   /* USER CODE END 3 */
 }

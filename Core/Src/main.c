@@ -255,6 +255,14 @@ int main(void)
               corpo[1][i] = 128;
           }
 	  }
+	  // Desenha a cobra
+
+	  //for ( uint8_t i = 0; i < 10 * tamanho; i++) {
+      //    ST7789_DrawPixel(corpo[0][i], corpo[1][i], WHITE);
+	  //}
+	  //ST7789_DrawFilledCircle(corpo[0][10 * tamanho - 1], corpo[1][10 * tamanho - 1], 2, WHITE);
+	  ST7789_DrawPixel(corpo[0][10 * tamanho - 1], corpo[1][10 * tamanho - 1], WHITE);
+
 	  if ((q_y >= posy_comida-8) && (q_y <= posy_comida +8) && // Comeu
 	  (q_x >= posx_comida-8) && (q_x <= posx_comida +8) && (comeu == 0)) {
 		  tamanho++;
@@ -293,12 +301,6 @@ int main(void)
 		  }
       }
 
-	  // Desenha a cobra
-
-	  //for ( uint8_t i = 0; i < 10 * tamanho; i++) {
-      //    ST7789_DrawPixel(corpo[0][i], corpo[1][i], WHITE);
-	  //}
-	  ST7789_DrawPixel(corpo[0][10 * tamanho - 1], corpo[1][10 * tamanho - 1], WHITE);
 
     /* USER CODE END WHILE */
 

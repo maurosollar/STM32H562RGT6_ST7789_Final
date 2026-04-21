@@ -1,4 +1,4 @@
-simSTM32H562RGT6+ ST7789
+STM32H562RGT6+ ST7789
 
 Display ST7789 240x240 1.54"
 --------------------------------------------------------------
@@ -73,6 +73,9 @@ STM32CubeMX
 
 Parte do encoder
 
+Vídeo explicando
+https://www.youtube.com/watch?v=xqzWQgpqHmI
+
 -Pinout & Configuration / Timers
   TIM2
     Comgined Channels: Encoder Mode
@@ -94,5 +97,21 @@ Observações do código:
 #include "stdio.h" // Utilizado pelo snprinf
 
 
+Para gerar o .bin utilizado pelo Programer:
+Project / Properties / C/C++ Build / Settings 
+MCU/MPU Post build outputs e marcar Convert to binary file (-O binary)
+                                    Convert to Intel Hex file (-O ihex)
+
+Ativar printf conseguir formatar float e double quando o projeto usa newlib-nao
+Ex.:
+float temp = 23.75f;
+snprintf(buf, sizeof(buf), "T=%.2f C", temp);
+
+vem sem para economizar memória e código
+Project / Properties
+C/C++ Build
+  Settings
+    MCU/MPU Settings
+    [*]User float with printf from newlib-nano (-u _printf_float)
 
 

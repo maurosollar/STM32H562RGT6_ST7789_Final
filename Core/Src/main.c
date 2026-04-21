@@ -136,13 +136,14 @@ int main(void)
   ST7789_DrawLine(0, 25, 239, 25, WHITE);
   //ST7789_DrawImage(0, 0, 128, 128, (uint16_t *)saber); // knky
 
+#define CORPO_TOTAL 25
   uint8_t q_x = 10;
   uint8_t q_y = 120;
   uint8_t q_dir = 0; // 0 -> frente, 1 <- traz, 2 ^ cima e 3 v baixo
   char buf[15];
   uint16_t enc_anterior, enc_atual;
   uint8_t tamanho= 1;
-  uint8_t corpo[2][100];
+  static uint8_t corpo[2][10 * CORPO_TOTAL];
   uint8_t loops = 0;
   uint8_t posx_comida, posy_comida;
   uint8_t comeu = 1;
@@ -210,16 +211,16 @@ int main(void)
 	      }
 		  enc_anterior = enc_atual;
 	  }
-	  if ((q_dir == 0) & (q_x < 239)){ // Frente
+	  if ((q_dir == 0) && (q_x < 239)){ // Frente
 		  q_x++;
 	  }
-	  if ((q_dir == 1) & (q_x > 0)){   // Traz
+	  if ((q_dir == 1) && (q_x > 0)){   // Traz
 		  q_x--;
 	  }
-	  if ((q_dir == 2) & (q_y > 26)){  // Cima
+	  if ((q_dir == 2) && (q_y > 26)){  // Cima
 		  q_y--;
 	  }
-	  if ((q_dir == 3) & (q_y < 239)){ // Baixo
+	  if ((q_dir == 3) && (q_y < 239)){ // Baixo
 		  q_y++;
 	  }
 
@@ -270,7 +271,7 @@ int main(void)
 		  comeu = 1;
 		  snprintf(buf, sizeof(buf), "Score: %d", score);
 		  ST7789_WriteString(0, 230, buf, Font_7x10, YELLOW, BLACK);
-		  if (tamanho < 11) {
+		  if (tamanho < (CORPO_TOTAL+1)) {
 		      for ( uint8_t i = 0; i < 10; i++) {
 		          corpo[0][i + ((tamanho -1) * 10)] = q_x;
 		          corpo[1][i + ((tamanho -1) * 10)] = q_y;
